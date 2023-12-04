@@ -27,9 +27,11 @@ public class Main {
         System.out.println("Welcome to the CLI Data Access Framework");
 
         CRUD<DataModel> dataAccess = null;
+        String format = null; // Declare 'format' outside the while loop
+
         while (dataAccess == null) {
             System.out.println("Select data format (CSV, JSON, TXT, SERIALIZED, SQLITE):");
-            String format = scanner.nextLine().toUpperCase();
+            format = scanner.nextLine().toUpperCase();
             dataAccess = dataAccessMap.get(format);
 
             if (dataAccess == null) {
@@ -51,7 +53,7 @@ public class Main {
                     // Parse data and create new DataModel object
                     DataModel newData = parseDataModel(data);
                     proxy.create(newData);
-                    System.out.println("Record created in " + "(format)" + " format.");
+                    System.out.println("Record created in " + format + " format.");
                     break;
                 case "READ":
                     System.out.println("Enter the ID of the record to read:");

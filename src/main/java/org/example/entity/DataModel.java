@@ -14,6 +14,10 @@ public class DataModel implements Serializable, SerializedObject.Identifiable {
         this.name = name;
     }
 
+    public DataModel() {
+
+    }
+
     // Getters and Setters
     public Integer getId() {
         return id;

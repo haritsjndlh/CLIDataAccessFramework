@@ -2,6 +2,7 @@ package org.example.storage;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.example.entity.DataModel;
 
 import java.util.stream.Collectors;
 import java.io.IOException;
@@ -13,18 +14,17 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.io.File;
+import java.lang.reflect.Type;
 
 public class JSON<T> implements CRUD<T> {
     private Path path;
     private Gson gson;
-    private TypeToken<List<T>> typeToken;
     private Class<T> typeClass;
 
     public JSON(String filename, Class<T> typeClass) {
         this.path = Paths.get(filename);
         this.gson = new Gson();
-        this.typeToken = new TypeToken<List<T>>() {
-        };
         this.typeClass = typeClass;
         createFileIfNotExists();
     }
@@ -45,13 +45,19 @@ public class JSON<T> implements CRUD<T> {
     @Override
     public List<T> readAll() {
         try (Reader reader = Files.newBufferedReader(path)) {
-            List<T> result = gson.fromJson(reader, typeToken.getType());
-            return result != null ? new ArrayList<>(result) : new ArrayList<>();
+            if (new File(path.toString()).length() == 0) {
+                return new ArrayList<>();
+            }
+            Type listType = TypeToken.getParameterized(ArrayList.class, typeClass).getType();
+            List<T> result = gson.fromJson(reader, listType);
+            return result != null ? result : new ArrayList<>();
         } catch (IOException e) {
             e.printStackTrace();
             return Collections.emptyList();
         }
     }
+
+
 
     @Override
     public void create(T obj) {
@@ -63,13 +69,18 @@ public class JSON<T> implements CRUD<T> {
     @Override
     public T read(Integer id) {
         List<T> objects = readAll();
-        return objects.stream().filter(obj -> getIdFromObject(obj).equals(id)).findFirst().orElse(null);
+        return objects.stream()
+                .filter(obj -> getIdFromObject(obj).equals(id))
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
     public void update(Integer id, T obj) {
         List<T> objects = readAll();
-        List<T> updatedObjects = objects.stream().map(existingObj -> getIdFromObject(existingObj).equals(id) ? obj : existingObj).collect(Collectors.toList());
+        List<T> updatedObjects = objects.stream()
+                .map(existingObj -> getIdFromObject(existingObj).equals(id) ? obj : existingObj)
+                .collect(Collectors.toList());
         writeToFile(updatedObjects);
     }
 
@@ -90,10 +101,11 @@ public class JSON<T> implements CRUD<T> {
 
     // You need to implement this method based on how your object's ID is stored and retrieved
     private Integer getIdFromObject(T obj) {
-        // Assuming the T class has a getId method or some way to retrieve its identifier
-        // For example, if you have a getId() method in your object, you can do:
-        // return obj.getId();
-        // But this needs to be replaced with whatever logic your objects use to store their ID.
+        // Implement this method based on how T's ID is retrieved.
+        // For example, if T is always a DataModel, you can cast and call getId:
+        if (obj instanceof DataModel) {
+            return ((DataModel) obj).getId();
+        }
         return null;
     }
 }
